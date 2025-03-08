@@ -50,7 +50,7 @@ class EcoFull {
     element.innerHTML = config.loadingAnimation;
 
     // Verifica se o recurso já está em cache
-    if (config.enableCache && this.getFromCache(src)) {
+    if (config.enableCache && this.isLocalStorageAvailable() && this.getFromCache(src)) {
       console.log(`[EcoFull] Recurso encontrado no cache: ${src}`);
       this.renderElement(element, this.getFromCache(src));
       return;
@@ -73,7 +73,9 @@ class EcoFull {
     img.onload = () => {
       console.log(`[EcoFull] Imagem carregada: ${src}`);
       this.renderElement(element, img);
-      if (config.enableCache) this.saveToCache(src, img.outerHTML);
+      if (config.enableCache && this.isLocalStorageAvailable()) {
+        this.saveToCache(src, img.outerHTML);
+      }
     };
     img.onerror = () => {
       console.error(`[EcoFull] Erro ao carregar a imagem: ${src}`);
@@ -90,7 +92,9 @@ class EcoFull {
     video.onloadeddata = () => {
       console.log(`[EcoFull] Vídeo carregado: ${src}`);
       this.renderElement(element, video);
-      if (config.enableCache) this.saveToCache(src, video.outerHTML);
+      if (config.enableCache && this.isLocalStorageAvailable()) {
+        this.saveToCache(src, video.outerHTML);
+      }
     };
     video.onerror = () => {
       console.error(`[EcoFull] Erro ao carregar o vídeo: ${src}`);
@@ -103,7 +107,9 @@ class EcoFull {
     iframe.onload = () => {
       console.log(`[EcoFull] Iframe carregado: ${src}`);
       this.renderElement(element, iframe);
-      if (config.enableCache) this.saveToCache(src, iframe.outerHTML);
+      if (config.enableCache && this.isLocalStorageAvailable()) {
+        this.saveToCache(src, iframe.outerHTML);
+      }
     };
     iframe.onerror = () => {
       console.error(`[EcoFull] Erro ao carregar o iframe: ${src}`);
@@ -117,16 +123,37 @@ class EcoFull {
   }
 
   static saveToCache(key, value) {
-    console.log(`[EcoFull] Salvando no cache: ${key}`);
-    localStorage.setItem(`ecofull-${key}`, value);
+    try {
+      console.log(`[EcoFull] Salvando no cache: ${key}`);
+      localStorage.setItem(`ecofull-${key}`, value);
+    } catch (error) {
+      console.error(`[EcoFull] Erro ao salvar no cache: ${error.message}`);
+    }
   }
 
   static getFromCache(key) {
-    const cachedValue = localStorage.getItem(`ecofull-${key}`);
-    if (cachedValue) {
-      console.log(`[EcoFull] Recuperando do cache: ${key}`);
+    try {
+      const cachedValue = localStorage.getItem(`ecofull-${key}`);
+      if (cachedValue) {
+        console.log(`[EcoFull] Recuperando do cache: ${key}`);
+      }
+      return cachedValue;
+    } catch (error) {
+      console.error(`[EcoFull] Erro ao recuperar do cache: ${error.message}`);
+      return null;
     }
-    return cachedValue;
+  }
+
+  static isLocalStorageAvailable() {
+    try {
+      const testKey = '__ecofull_test__';
+      localStorage.setItem(testKey, testKey);
+      localStorage.removeItem(testKey);
+      return true;
+    } catch (error) {
+      console.warn('[EcoFull] localStorage não está disponível. O cache será desabilitado.');
+      return false;
+    }
   }
 }
 
